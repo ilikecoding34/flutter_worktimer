@@ -5,14 +5,12 @@ class CustomInputhour extends StatefulWidget {
   CustomInputhour(
       {Key? key,
       required this.controller,
-      required this.textsfw,
-      required this.textmfw,
+      required this.textw,
       required this.fsize,
       required this.eng})
       : super(key: key);
   bool eng;
-  double textsfw;
-  double textmfw;
+  double textw;
   double fsize;
   TextEditingController controller;
 
@@ -26,7 +24,7 @@ class _CustomInputState extends State<CustomInputhour> {
     return AnimatedContainer(
       duration: Duration(seconds: 1),
       curve: Curves.fastOutSlowIn,
-      width: widget.textmfw,
+      width: widget.textw,
       child: widget.eng
           ? TextField(
               keyboardType: TextInputType.number,

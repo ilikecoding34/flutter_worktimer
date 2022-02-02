@@ -5,14 +5,12 @@ class CustomInputsec extends StatefulWidget {
   CustomInputsec(
       {Key? key,
       required this.controller,
-      required this.textsfw,
-      required this.textmfw,
+      required this.textw,
       required this.fsize,
       required this.eng})
       : super(key: key);
   bool eng;
-  double textsfw;
-  double textmfw;
+  double textw;
   double fsize;
   TextEditingController controller;
 
@@ -64,7 +62,7 @@ class _CustomInputState extends State<CustomInputsec> {
     return AnimatedContainer(
       duration: Duration(seconds: 1),
       curve: Curves.fastOutSlowIn,
-      width: widget.textmfw - sizereduce,
+      width: widget.textw - sizereduce,
       child: widget.eng
           ? TextField(
               keyboardType: TextInputType.number,

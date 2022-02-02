@@ -40,8 +40,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  late Animation<double> animation;
-  late AnimationController controller;
+  late Animation<double> animationfront;
+  late Animation<double> animationback;
+  late AnimationController controllerfront;
+  late AnimationController controllerback;
 
   final arrivehour = TextEditingController();
   final arrivemin = TextEditingController();
@@ -76,34 +78,36 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (arrivehour.text.isNotEmpty &&
         arrivemin.text.isNotEmpty &&
         arrivesec.text.isNotEmpty) {
-      textvisible = true;
-      final endtime = DateTime(
-          now.year,
-          now.month,
-          now.day - (int.parse(arrivehour.text) > now.hour ? 1 : 0),
-          int.parse(arrivehour.text) + 8,
-          int.parse(arrivemin.text) + (lunchtime ? 40 : 0),
-          int.parse(arrivesec.text));
-      final overtime = endtime.add(Duration(minutes: overtimeplus ? 20 : 0));
+      setState(() {
+        textvisible = true;
+        final endtime = DateTime(
+            now.year,
+            now.month,
+            now.day - (int.parse(arrivehour.text) > now.hour ? 1 : 0),
+            int.parse(arrivehour.text) + 8,
+            int.parse(arrivemin.text) + (lunchtime ? 40 : 0),
+            int.parse(arrivesec.text));
+        final overtime = endtime.add(Duration(minutes: overtimeplus ? 20 : 0));
 
-      hour = now.difference(endtime).inHours.abs() % 24;
-      min = now.difference(endtime).inMinutes.abs() % 60;
-      sec = now.difference(endtime).inSeconds.abs() % 60;
-      dinpercentage =
-          ((remain - now.difference(endtime).inSeconds.abs()) / remain);
-      Duration value = now.difference(overtime).abs();
-      Duration value2 = now.difference(endtime.add(Duration(hours: 4))).abs();
-      if (now.isAfter(overtime)) {
-        until = "";
-      } else {
-        until = english ? "until" : ' ';
-      }
-      isover = now.isAfter(endtime);
-      fail = now.isAfter(endtime.add(Duration(hours: 4)));
-      overtimetext =
-          "${value.inHours % 24} : ${value.inMinutes % 60} : ${value.inSeconds % 60}";
-      absolutendtext =
-          "${value2.inHours % 24} : ${value2.inMinutes % 60} : ${value2.inSeconds % 60}";
+        hour = now.difference(endtime).inHours.abs() % 24;
+        min = now.difference(endtime).inMinutes.abs() % 60;
+        sec = now.difference(endtime).inSeconds.abs() % 60;
+        dinpercentage =
+            ((remain - now.difference(endtime).inSeconds.abs()) / remain);
+        Duration value = now.difference(overtime).abs();
+        Duration value2 = now.difference(endtime.add(Duration(hours: 4))).abs();
+        if (now.isAfter(overtime)) {
+          until = "";
+        } else {
+          until = english ? "until" : ' ';
+        }
+        isover = now.isAfter(endtime);
+        fail = now.isAfter(endtime.add(Duration(hours: 4)));
+        overtimetext =
+            "${value.inHours % 24} : ${value.inMinutes % 60} : ${value.inSeconds % 60}";
+        absolutendtext =
+            "${value2.inHours % 24} : ${value2.inMinutes % 60} : ${value2.inSeconds % 60}";
+      });
     } else {
       textvisible = false;
     }
@@ -137,27 +141,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    controller = AnimationController(
+    controllerfront = AnimationController(
       vsync: this,
       duration: Duration(seconds: 4),
     );
 
-    Tween<double> _rotationTween = Tween(begin: -math.pi, end: math.pi);
+    controllerback = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 6),
+    );
 
-    animation = _rotationTween.animate(
-        new CurvedAnimation(parent: controller, curve: Curves.easeInOut))
-      ..addListener(() {
-        setState(() {});
-      })
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          controller.repeat(reverse: true);
-        } else if (status == AnimationStatus.dismissed) {
-          controller.forward();
-        }
-      });
+    Tween<double> waveTween = Tween(begin: -math.pi, end: math.pi);
 
-    controller.repeat(reverse: true);
+    animationfront = waveTween.animate(
+        new CurvedAnimation(parent: controllerfront, curve: Curves.easeInOut));
+    animationback = waveTween.animate(
+        new CurvedAnimation(parent: controllerback, curve: Curves.easeInOut));
+
+    controllerfront.repeat(reverse: true);
+    controllerback.repeat(reverse: true);
 
     _isRunning = true;
     Timer.periodic(Duration(seconds: 1), (Timer timer) {
@@ -172,10 +174,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
     final double height = MediaQuery.of(context).size.height;
+    String hungariantextovertime =
+        fail ? "már mindegy..." : "(Ez előtt tuti: $absolutendtext)";
+    String englishtextovertime =
+        fail ? 'never mind...' : '(go before: $absolutendtext)';
     String overtext = english ? 'overtime:' : 'túlóra';
-    String warningtext = english
-        ? (fail ? 'never mind...' : '(go before: $absolutendtext)')
-        : (fail ? "már mindegy..." : "(Ez előtt tuti: $absolutendtext)");
+    String warningtext =
+        english ? (englishtextovertime) : (hungariantextovertime);
     return Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
@@ -195,19 +200,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
         body: Stack(children: [
           Positioned(
-            child: CustomPaint(
-              size: Size(width,
-                  height), //You can Replace [WIDTH] with your desired width for Custom Paint and height will be calculated automatically
-              painter: RPSCustomPainter(animation.value, dinpercentage, true),
-            ),
-          ),
+              child: Waveanimation(
+                  width: width,
+                  height: height,
+                  animation: animationfront,
+                  dinpercentage: dinpercentage,
+                  front: true)),
           Positioned(
-            child: CustomPaint(
-              size: Size(width,
-                  height), //You can Replace [WIDTH] with your desired width for Custom Paint and height will be calculated automatically
-              painter: RPSCustomPainter(animation.value, dinpercentage, false),
-            ),
-          ),
+              child: Waveanimation(
+                  width: width,
+                  height: height,
+                  animation: animationback,
+                  dinpercentage: dinpercentage,
+                  front: false)),
           Column(children: [
             LinearProgressIndicator(
               value: dinpercentage,
@@ -258,22 +263,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               children: <Widget>[
                 CustomInputhour(
                     controller: arrivehour,
-                    textsfw: textsfw,
-                    textmfw: textmfw,
+                    textw: texthfw,
                     fsize: fsize,
                     eng: english),
                 Padding(
                     padding: EdgeInsets.only(left: 20, right: 20),
                     child: CustomInputmin(
                         controller: arrivemin,
-                        textsfw: textsfw,
-                        textmfw: textmfw,
+                        textw: textmfw,
                         fsize: fsize,
                         eng: english)),
                 CustomInputsec(
                     controller: arrivesec,
-                    textsfw: textsfw,
-                    textmfw: textmfw,
+                    textw: textsfw,
                     fsize: fsize,
                     eng: english)
               ],
