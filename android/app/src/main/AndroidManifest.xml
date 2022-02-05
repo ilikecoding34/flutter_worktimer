@@ -13,7 +13,19 @@
    <application
         android:label="Worktimer"
         android:icon="@mipmap/ic_launcher">
-       <meta-data android:name="com.startapp.sdk.worktimer" android:value="200764026" />
+       <!-- TODO replace YOUR_APP_ID with actual value -->
+<meta-data
+    android:name="com.startapp.sdk.APPLICATION_ID"
+    android:value="200764026" />
+    <!-- TODO Splash Ad controlled by the android:value below -->
+<provider
+    android:authorities="com.startapp.flutter.sdk.${applicationId}"
+    android:name="com.startapp.flutter.sdk.StartAppFlutterHelper"
+    android:exported="false">
+    <meta-data
+        android:name="com.startapp.sdk.SPLASH_ADS_ENABLED"
+        android:value="false" />
+</provider>
        
         <activity
             android:name=".MainActivity"

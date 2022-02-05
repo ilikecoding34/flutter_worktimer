@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:html' as html;
 import 'package:worktimer/constants.dart';
 import 'package:worktimer/input_widget_hour.dart';
 import 'package:worktimer/input_widget_min.dart';
 import 'package:worktimer/wave_widget.dart';
-
 import 'input_widget_sec.dart';
+
+import 'package:startapp_sdk/startapp.dart';
 
 void main() => runApp(MyApp());
 
@@ -40,6 +40,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  var startAppSdk = StartAppSdk();
+  var _sdkVersion = "";
+
+  StartAppBannerAd? bannerAd;
+
   late Animation<double> animationfront;
   late Animation<double> animationback;
   late AnimationController controllerfront;
@@ -113,11 +118,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
   }
 
-  void htmlOpenLink() {
-    String url = _url;
-    html.window.open(url, '_self');
-  }
-
   void _launchURL() async {
     if (!await launch(
       _url,
@@ -140,6 +140,24 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
+    // TODO make sure to comment out this line before release
+    startAppSdk.setTestAdsEnabled(true);
+
+    // TODO your app doesn't need to call this method unless for debug purposes
+    startAppSdk.getSdkVersion().then((value) {
+      setState(() => _sdkVersion = value);
+    });
+
+    startAppSdk.loadBannerAd(StartAppBannerType.BANNER).then((bannerAd) {
+      setState(() {
+        this.bannerAd = bannerAd;
+      });
+    }).onError<StartAppException>((ex, stackTrace) {
+      debugPrint("Error loading Banner ad: ${ex.message}");
+    }).onError((error, stackTrace) {
+      debugPrint("Error loading Banner ad: $error");
+    });
 
     controllerfront = AnimationController(
       vsync: this,
@@ -354,11 +372,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   )
                 : SizedBox.shrink(),
             SizedBox(
-              height: MediaQuery.of(context).size.height - 400,
+              height: MediaQuery.of(context).size.height -
+                  (440 - (kIsWeb ? 80 : 0)),
             ),
-            ElevatedButton(
-                onPressed: kIsWeb ? htmlOpenLink : _launchURL,
-                child: Text('Buy me a 🍺')),
+            ElevatedButton(onPressed: _launchURL, child: Text('Buy me a 🍺')),
+            !kIsWeb ? StartAppBanner(bannerAd!) : Container(),
           ]),
         ]));
   }
